@@ -327,7 +327,7 @@ in
         matchConfig.Name = "br0";
         networkConfig = {
           Description = "Main Bridge";
-          DHCPServer = "no";
+          DHCPServer = "yes";
         };
 
         # Static IP configuration for the bridge itself
