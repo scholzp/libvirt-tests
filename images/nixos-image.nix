@@ -75,7 +75,6 @@ nixpkgs.lib.nixosSystem {
         hardware.enableAllHardware = lib.mkForce false;
         hardware.enableRedistributableFirmware = false;
 
-        # Please keep in sync with documentation in networks.md!
         networking.firewall.enable = false;
         networking.hostName = "nixos";
         networking.interfaces.eth1337.ipv4.addresses = [
