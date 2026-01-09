@@ -186,12 +186,23 @@ let
       </domain>
     '';
 
-  new_interface = ''
+  new_interface =
+    {
+      explicit_bdf ? false,
+    }: ''
     <interface type='ethernet'>
       <mac address='52:54:00:e5:b8:dd'/>
       <target dev='tap0'/>
       <model type='virtio'/>
       <driver queues='1'/>
+      ${
+          if explicit_bdf then
+            ''
+              <address type='pci' domain='0x0000' bus='0x00' slot='0x04' function='0x0'/>
+            ''
+          else
+            ""
+        }
     </interface>
   '';
 in
