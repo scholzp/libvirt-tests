@@ -4,7 +4,6 @@
   nixos-image,
   chv-ovmf,
 }:
-
 {
   default = pkgs.callPackage ./libvirt-test.nix {
     inherit
@@ -22,5 +21,15 @@
       chv-ovmf
       ;
     testScriptFile = ./testscript_long_migration_with_load.py;
+  };
+
+  numa_node = pkgs.callPackage ./libvirt-test.nix {
+    inherit
+      libvirt-src
+      nixos-image
+      chv-ovmf
+      ;
+    testScriptFile = ./testscript.py;
+    enable_numa = true;
   };
 }
