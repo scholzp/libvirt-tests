@@ -9,13 +9,15 @@
     # sure the submodules in a local libvirt checkout are populated.
     libvirt-src = {
       # url = "git+file:<path/to/libvirt>?submodules=1";
-      url = "git+https://github.com/cyberus-technology/libvirt?ref=gardenlinux&submodules=1";
+      url = "git+file:///home/pscholz/projects/libvirt?submodules=1";
+      # url = "git+https://github.com/cyberus-technology/libvirt?ref=gardenlinux&submodules=1";
       # url = "git+ssh://git@gitlab.cyberus-technology.de/cyberus/cloud/libvirt?ref=managedsave-fix&submodules=1";
       flake = false;
     };
     cloud-hypervisor-src = {
       # url = "git+file:<path/to/cloud-hypervisor>";
-      url = "github:cyberus-technology/cloud-hypervisor?ref=gardenlinux";
+      url = "git+file:///home/pscholz/projects/cloud-hypervisor";
+      # url = "github:cyberus-technology/cloud-hypervisor?ref=gardenlinux";
       flake = false;
     };
     edk2-src = {
