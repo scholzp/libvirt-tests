@@ -34,8 +34,8 @@ let
       <domain type='kvm' id='21050'>
         <name>testvm</name>
         <uuid>4eb6319a-4302-4407-9a56-802fc7e6a422</uuid>
-        <memory unit='KiB'>1572864</memory>
-        <currentMemory unit='KiB'>1572864</currentMemory>
+        <memory unit='KiB'>1048576</memory>
+        <currentMemory unit='KiB'>1048576</currentMemory>
         <vcpu placement='static'>2</vcpu>
         <cputune>
           <vcpupin vcpu='0' cpuset='0-1'/>
@@ -46,13 +46,79 @@ let
           <topology sockets='2' dies='1' cores='1' threads='1'/>
           <numa>
             <!-- Defines the guest NUMA topology -->
-            <cell id='0' cpus='0-1' memory='1572864' unit='KiB'/>
+            <cell id='0' cpus='0-1' memory='1048576' unit='KiB'/>
           </numa>
         </cpu>
         <numatune>
-          <memory mode='strict' nodeset='0'/>
+          <memory mode='strict' nodeset='3'/>
             <!-- Maps memory from guest to host NUMA topology. nodeset refers to host NUMA node, cellid to guest NUMA -->
           <memnode cellid='0' mode='strict' nodeset='3'/>
+        </numatune>
+        <os>
+          <type arch='x86_64'>hvm</type>
+          <kernel>/etc/CLOUDHV.fd</kernel>
+          <boot dev='hd'/>
+        </os>
+        <clock offset='utc'/>
+        <on_poweroff>destroy</on_poweroff>
+        <on_reboot>restart</on_reboot>
+        <on_crash>destroy</on_crash>
+        <devices>
+          <emulator>cloud-hypervisor</emulator>
+          <disk type='file' device='disk'>
+            <source file='${image}'/>
+            <target dev='vda' bus='virtio'/>
+          </disk>
+          <interface type='ethernet'>
+            <mac address='52:54:00:e5:b8:01'/>
+            <target dev='tap1'/>
+            <model type='virtio'/>
+            <driver queues='1'/>
+            <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x0'/>
+          </interface>
+          <serial type='pty'>
+            <source path='/dev/pts/2'/>
+            <target port='0'/>
+          </serial>
+        </devices>
+      </domain>
+    '';
+
+  virsh_ch_updated =
+    {
+      image ? "/var/lib/libvirt/storage-pools/nfs-share/nixos.img",
+      numa ? false,
+      hugepages ? false,
+      prefault ? false,
+      serial ? "pty",
+      # Whether all device will be assigned a static BDF through the XML or only some
+      all_static_bdf ? false,
+      # Whether we add a function ID to specific BDFs or not
+      use_bdf_function ? false,
+    }:
+    ''
+      <domain type='kvm' id='21050'>
+        <name>testvm</name>
+        <uuid>4eb6319a-4302-4407-9a56-802fc7e6a422</uuid>
+        <memory unit='KiB'>1048576</memory>
+        <currentMemory unit='KiB'>1048576</currentMemory>
+        <vcpu placement='static'>2</vcpu>
+        <cputune>
+          <vcpupin vcpu='0' cpuset='2'/>
+          <vcpupin vcpu='1' cpuset='3'/>
+          <emulatorpin cpuset='0-1'/>
+        </cputune>
+        <cpu>
+          <topology sockets='2' dies='1' cores='1' threads='1'/>
+          <numa>
+            <!-- Defines the guest NUMA topology -->
+            <cell id='0' cpus='0-1' memory='1048576' unit='KiB'/>
+          </numa>
+        </cpu>
+        <numatune>
+          <memory mode='strict' nodeset='1'/>
+            <!-- Maps memory from guest to host NUMA topology. nodeset refers to host NUMA node, cellid to guest NUMA -->
+          <memnode cellid='0' mode='strict' nodeset='1'/>
         </numatune>
         <os>
           <type arch='x86_64'>hvm</type>
@@ -369,6 +435,11 @@ in
         "/etc/domain-chv.xml" = {
           "C+" = {
             argument = "${pkgs.writeText "domain.xml" (virsh_ch_xml { })}";
+          };
+        };
+        "/etc/domain-chv-target.xml" = {
+          "C+" = {
+            argument = "${pkgs.writeText "domain-target.xml" (virsh_ch_updated { })}";
           };
         };
         "/etc/libvirt_test_network.xml" = {

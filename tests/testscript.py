@@ -1970,9 +1970,8 @@ class LibvirtTests(SaveLogsOnErrorTestCase):
         controllerVM.succeed("virsh start testvm")
         wait_for_ssh(controllerVM)
         controllerVM.succeed(
-            "virsh migrate --domain testvm --desturi ch+tcp://computeVM/session --live --p2p"
+            "virsh migrate --domain testvm --desturi ch+tcp://computeVM/session --live --p2p --xml /etc/domain-chv-target.xml"
         )
-        breakpoint()
 
 
 def suite():
