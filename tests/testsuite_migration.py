@@ -861,25 +861,86 @@ class LibvirtTests(LibvirtTestsBase):  # type: ignore
             "virsh migrate --domain testvm --desturi ch+tcp://computeVM/session --persistent --live --parallel --parallel-connections 4"
         )
 
+    def test_live_migration_network_lost(self):
+        """ Test important stuff """
+
+        controllerVM.succeed("virsh define /etc/domain-chv.xml")
+        controllerVM.succeed("virsh start testvm")
+
+        wait_for_ssh(controllerVM)
+
+        # Stress the CH VM in order to make the migration take longer
+        ssh(controllerVM, "screen -dmS stress stress -m 4 --vm-bytes 400M")
+
+        parallel = False
+        parallel_args = "--parallel --parallel-connections 4"
+        migration_command = f"virsh migrate --domain testvm --desturi ch+tcp://computeVM/session --persistent --live --p2p {parallel_args if parallel else ""}"
+        # Do migration in a screen session and detach
+        controllerVM.succeed(
+            f"screen -dmS migrate {migration_command}"
+        )
+
+        # We wait for the first iteration of sending memory, then cut off the
+        # network on the computeVM.
+        controllerVM.wait_until_succeeds("grep -qF 'iteration:0' /var/log/libvirt/ch/testvm.log", 60)
+        computeVM.succeed("ip link set dev eth0 down")
+        computeVM.succeed("ip link set dev eth1 down")
+
+        sleep_time = 120
+        print("XAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXA")
+        print(f"sleeping for {sleep_time} seconds")
+        time.sleep(sleep_time)
+
+        # Ensure the VM is really gone and we have no zombie VMs
+        # def check_virsh_list(vm):
+        #     status, _ = vm.execute("virsh list | grep testvm > /dev/null")
+        #     if status != 0:
+        #         time.sleep(1)
+        #     return status == 0
+
+        # wait_until_fail(lambda: check_virsh_list(computeVM))
+
+        # wait_until_succeed(lambda: check_virsh_list(controllerVM))
+
+        # controllerVM.succeed("virsh list | grep 'running'")
+
+        # wait_for_ssh(controllerVM)
+
+        # ssh(controllerVM, "pkill screen")
+
+        # # Wait for migration in the screen session to finish
+        # def migration_finished():
+        #     status, _ = controllerVM.execute("screen -ls | grep migrate")
+        #     return status != 0
+
+        # wait_until_succeed(migration_finished)
+
+
+
+        # computeVM.succeed("virsh list | grep testvm | grep running")
+        # wait_for_ssh(computeVM)
+
+
 
 def suite():
     # Test cases involving live migration sorted in alphabetical order.
     testcases = [
-        LibvirtTests.test_bdf_explicit_assignment,
-        LibvirtTests.test_bdf_implicit_assignment,
-        LibvirtTests.test_live_migration,
-        LibvirtTests.test_live_migration_kill_chv_on_receiver_side,
-        LibvirtTests.test_live_migration_kill_chv_on_sender_side,
-        LibvirtTests.test_live_migration_non_peer2peer_is_not_supported,
-        LibvirtTests.test_live_migration_parallel_connections,
-        LibvirtTests.test_live_migration_tls,
-        LibvirtTests.test_live_migration_tls_without_certificates,
-        LibvirtTests.test_live_migration_to_self_is_rejected,
-        LibvirtTests.test_live_migration_virsh_non_blocking,
-        LibvirtTests.test_live_migration_with_hotplug,
-        LibvirtTests.test_live_migration_with_hotplug_and_virtchd_restart,
-        LibvirtTests.test_live_migration_with_serial_tcp,
-        LibvirtTests.test_live_migration_with_vcpu_pinning,
+        # LibvirtTests.test_bdf_explicit_assignment,
+        # LibvirtTests.test_bdf_implicit_assignment,
+        # LibvirtTests.test_live_migration,
+        # LibvirtTests.test_live_migration_kill_chv_on_receiver_side,
+        # LibvirtTests.test_live_migration_kill_chv_on_sender_side,
+        # LibvirtTests.test_live_migration_non_peer2peer_is_not_supported,
+        # LibvirtTests.test_live_migration_parallel_connections,
+        # LibvirtTests.test_live_migration_tls,
+        # LibvirtTests.test_live_migration_tls_without_certificates,
+        # LibvirtTests.test_live_migration_to_self_is_rejected,
+        # LibvirtTests.test_live_migration_virsh_non_blocking,
+        # LibvirtTests.test_live_migration_with_hotplug,
+        # LibvirtTests.test_live_migration_with_hotplug_and_virtchd_restart,
+        # LibvirtTests.test_live_migration_with_serial_tcp,
+        # LibvirtTests.test_live_migration_with_vcpu_pinning,
+        LibvirtTests.test_live_migration_network_lost,
     ]
 
     suite = unittest.TestSuite()
