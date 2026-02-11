@@ -10,16 +10,16 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1770215234,
-        "narHash": "sha256-Nhol/EzUJGcPGUwBtdvOEF9fvRc1oSvMkiSPM41PDOo=",
-        "owner": "cyberus-technology",
+        "lastModified": 1770799123,
+        "narHash": "sha256-nGotz/SD+uEJ/CHMFDFXnwTp/4ZbIZLw1TJPEAmPoS8=",
+        "owner": "amphi",
         "repo": "cloud-hypervisor",
-        "rev": "332a4bc5d64bccab7eb87e45536bd22b7e4ed4b1",
+        "rev": "84e43c290b209c556d3d39a85c9fbef121597077",
         "type": "github"
       },
       "original": {
-        "owner": "cyberus-technology",
-        "ref": "gardenlinux",
+        "owner": "amphi",
+        "ref": "gracefully-handle-lost-network",
         "repo": "cloud-hypervisor",
         "type": "github"
       }
