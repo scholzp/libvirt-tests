@@ -10,11 +10,11 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1770799123,
-        "narHash": "sha256-nGotz/SD+uEJ/CHMFDFXnwTp/4ZbIZLw1TJPEAmPoS8=",
+        "lastModified": 1770972839,
+        "narHash": "sha256-fQlh8lcvBxxfYZJZvgsVbEqzHJSULkPgREyZ0wQZ2AQ=",
         "owner": "amphi",
         "repo": "cloud-hypervisor",
-        "rev": "84e43c290b209c556d3d39a85c9fbef121597077",
+        "rev": "4bc8d1a3c220360db217cfccec0500a97b1d82e5",
         "type": "github"
       },
       "original": {
@@ -154,8 +154,11 @@
       "locked": {
         "lastModified": 1769976257,
         "narHash": "sha256-PhplAkLDpw7fPT0p6JFF8h2E2Icp9w/63RIXF9cCjYE=",
+        "lastModified": 1769976257,
+        "narHash": "sha256-PhplAkLDpw7fPT0p6JFF8h2E2Icp9w/63RIXF9cCjYE=",
         "owner": "phip1611",
         "repo": "fcntl-tool",
+        "rev": "e4da9b6faea0e90ee8a2bf0bb06f83f390626303",
         "rev": "e4da9b6faea0e90ee8a2bf0bb06f83f390626303",
         "type": "github"
       },
@@ -239,6 +242,41 @@
         "ref": "main",
         "repo": "libvirt-tests",
         "type": "github"
+      }
+    },
+    "libvirt_2": {
+      "inputs": {
+        "cloud-hypervisor": [
+          "libvirt",
+          "libvirt-tests",
+          "cloud-hypervisor"
+        ],
+        "keycodemapdb": "keycodemapdb_2",
+        "libvirt-tests": [
+          "libvirt",
+          "libvirt-tests"
+        ],
+        "nixpkgs": [
+          "libvirt",
+          "libvirt-tests",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1770625785,
+        "narHash": "sha256-cgFg5Q2SejgCK9GKPs7ppoAqnvrpaibvlbRkhfpR/Ic=",
+        "ref": "gardenlinux",
+        "rev": "4c2c91ea939f009990db1b72e55bd6663bcfb764",
+        "revCount": 53615,
+        "submodules": true,
+        "type": "git",
+        "url": "https://github.com/cyberus-technology/libvirt"
+      },
+      "original": {
+        "ref": "gardenlinux",
+        "submodules": true,
+        "type": "git",
+        "url": "https://github.com/cyberus-technology/libvirt"
       }
     },
     "nixpkgs": {

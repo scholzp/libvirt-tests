@@ -886,10 +886,7 @@ class LibvirtTests(LibvirtTestsBase):  # type: ignore
         computeVM.succeed("ip link set dev eth0 down")
         computeVM.succeed("ip link set dev eth1 down")
 
-        sleep_time = 120
-        print("XAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXAXA")
-        print(f"sleeping for {sleep_time} seconds")
-        time.sleep(sleep_time)
+        breakpoint()
 
         # Ensure the VM is really gone and we have no zombie VMs
         # def check_virsh_list(vm):
