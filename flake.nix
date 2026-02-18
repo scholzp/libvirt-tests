@@ -8,14 +8,14 @@
     # A local path can be used for developing or testing local changes. Make
     # sure the submodules in a local libvirt checkout are populated.
     #  libvirt.url = "git+file:/home/gonzo/libvirt?submodules=1";
-    libvirt.url = "git+https://github.com/tpressure/libvirt?ref=handle_network_failure&submodules=1";
+    libvirt.url = "git+file:///home/pscholz/projects/libvirt?submodules=1";
     libvirt.inputs.cloud-hypervisor.follows = "cloud-hypervisor";
     # Break the chain of cyclic dependencies:
     libvirt.inputs.libvirt-tests.inputs.libvirt.follows = "libvirt";
     libvirt.inputs.nixpkgs.follows = "nixpkgs";
 
     # cloud-hypervisor.url = "git+file:<path/to/cloud-hypervisor>";
-    cloud-hypervisor.url = "github:amphi/cloud-hypervisor?ref=gracefully-handle-lost-network";
+    cloud-hypervisor.url = "git+file:///home/pscholz/projects/cloud-hypervisor?submodules=1";
     cloud-hypervisor.inputs.nixpkgs.follows = "nixpkgs";
 
     edk2-src.url = "git+https://github.com/cyberus-technology/edk2?ref=gardenlinux&submodules=1";
