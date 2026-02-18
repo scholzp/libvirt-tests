@@ -886,36 +886,37 @@ class LibvirtTests(LibvirtTestsBase):  # type: ignore
         computeVM.succeed("ip link set dev eth0 down")
         computeVM.succeed("ip link set dev eth1 down")
 
+
         breakpoint()
-
         # Ensure the VM is really gone and we have no zombie VMs
-        # def check_virsh_list(vm):
-        #     status, _ = vm.execute("virsh list | grep testvm > /dev/null")
-        #     if status != 0:
-        #         time.sleep(1)
-        #     return status == 0
+        def check_virsh_list(vm):
+            status, _ = vm.execute("virsh list | grep testvm > /dev/null")
+            if status != 0:
+                time.sleep(1)
+            return status == 0
 
-        # wait_until_fail(lambda: check_virsh_list(computeVM))
+        wait_until_fail(lambda: check_virsh_list(computeVM))
 
-        # wait_until_succeed(lambda: check_virsh_list(controllerVM))
+        wait_until_succeed(lambda: check_virsh_list(controllerVM))
 
-        # controllerVM.succeed("virsh list | grep 'running'")
+        controllerVM.succeed("virsh list | grep 'running'")
 
-        # wait_for_ssh(controllerVM)
+        wait_for_ssh(controllerVM)
 
-        # ssh(controllerVM, "pkill screen")
+        # TDOD: terminate scree instaed
+        ssh(controllerVM, "pkill screen")
 
-        # # Wait for migration in the screen session to finish
-        # def migration_finished():
-        #     status, _ = controllerVM.execute("screen -ls | grep migrate")
-        #     return status != 0
+        # Wait for migration in the screen session to finish
+        def migration_finished():
+            status, _ = controllerVM.execute("screen -ls | grep migrate")
+            return status != 0
 
-        # wait_until_succeed(migration_finished)
+        wait_until_succeed(migration_finished)
 
 
 
-        # computeVM.succeed("virsh list | grep testvm | grep running")
-        # wait_for_ssh(computeVM)
+        computeVM.succeed("virsh list | grep testvm | grep running")
+        wait_for_ssh(computeVM)
 
 
 
