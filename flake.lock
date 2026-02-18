@@ -10,11 +10,11 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1770972839,
-        "narHash": "sha256-fQlh8lcvBxxfYZJZvgsVbEqzHJSULkPgREyZ0wQZ2AQ=",
+        "lastModified": 1770989976,
+        "narHash": "sha256-Mg9vCGUMEkJSX9f6Qr7isEv/3Zu2f4GqFTRoZBsYOgM=",
         "owner": "amphi",
         "repo": "cloud-hypervisor",
-        "rev": "4bc8d1a3c220360db217cfccec0500a97b1d82e5",
+        "rev": "a0fea5be0b12db5c7dbf1cd61fb62caa498349e3",
         "type": "github"
       },
       "original": {
