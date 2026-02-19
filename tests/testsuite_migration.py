@@ -24,6 +24,7 @@ try:
         initialComputeVMSetup,
         ssh,
         wait_for_ssh,
+        wait_for_ping,
         wait_until_fail,
         wait_until_succeed,
     )
@@ -44,6 +45,7 @@ except Exception:
         initialComputeVMSetup,
         ssh,
         wait_for_ssh,
+        wait_for_ping,
         wait_until_fail,
         wait_until_succeed,
     )
@@ -862,7 +864,9 @@ class LibvirtTests(LibvirtTestsBase):  # type: ignore
         )
 
     def test_live_migration_network_lost(self):
-        """ Test important stuff """
+        """ Test that a connection lost while live migration leads to graceful
+
+        """
 
         controllerVM.succeed("virsh define /etc/domain-chv.xml")
         controllerVM.succeed("virsh start testvm")
@@ -883,40 +887,44 @@ class LibvirtTests(LibvirtTestsBase):  # type: ignore
         # We wait for the first iteration of sending memory, then cut off the
         # network on the computeVM.
         controllerVM.wait_until_succeeds("grep -qF 'iteration:0' /var/log/libvirt/ch/testvm.log", 60)
-        computeVM.succeed("ip link set dev eth0 down")
         computeVM.succeed("ip link set dev eth1 down")
 
-
-        breakpoint()
         # Ensure the VM is really gone and we have no zombie VMs
         def check_virsh_list(vm):
             status, _ = vm.execute("virsh list | grep testvm > /dev/null")
             if status != 0:
                 time.sleep(1)
+            print("tests")
             return status == 0
 
         wait_until_fail(lambda: check_virsh_list(computeVM))
-
         wait_until_succeed(lambda: check_virsh_list(controllerVM))
 
+        # Ensure the VM is still in running state on the sender side
         controllerVM.succeed("virsh list | grep 'running'")
-
         wait_for_ssh(controllerVM)
 
-        # TDOD: terminate scree instaed
-        ssh(controllerVM, "pkill screen")
-
-        # Wait for migration in the screen session to finish
-        def migration_finished():
-            status, _ = controllerVM.execute("screen -ls | grep migrate")
-            return status != 0
-
-        wait_until_succeed(migration_finished)
-
-
-
-        computeVM.succeed("virsh list | grep testvm | grep running")
+        # terminate the screen session that we used to perform the migration
+        # controllerVM.succeed("screen -X -S migrate quit")
+        controllerVM.succeed("pkill -9 screen")
+        # For the following test we don't need to stress the VM
+        # ssh(controllerVM, 'screen -X -S stress quit')
+        # Let's start a second migration attempt
+        # Restart the interfaces...
+        computeVM.wait_until_succeeds("ip link set dev eth1 up")
+        wait_for_ping(controllerVM, ip = '192.168.100.2')
+        # Ensure the VM still runs on the sender side
+        controllerVM.succeed("virsh list | grep testvm | grep running")
+        # start a new migration
+        time.sleep(3)
+        controllerVM.succeed(migration_command)
+        # See if we connect to the VM from the receiver side
         wait_for_ssh(computeVM)
+        # Ensure not zombi VMs are left on the sender side
+        controllerVM.fail("virsh list | grep testvm")
+        # Ensure the VM is running on the receiver side
+        computeVM.succeed("virsh list | grep testvm | grep running")
+        # breakpoint()
 
 
 
