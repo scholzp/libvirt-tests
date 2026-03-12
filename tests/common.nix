@@ -536,6 +536,7 @@ in
     jq
     lsof
     mount
+    msr
     numactl
     numatop
     python3
