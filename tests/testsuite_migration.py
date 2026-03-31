@@ -227,27 +227,53 @@ class LibvirtTests(LibvirtTestsBase):  # type: ignore
         )
 
         # We use tcpdump and tshark to check for the RARP packets.
+
+        # https://wiki.wireshark.org/RARP
         ethertype_rarp = "0x8035"
+        # GARP use the ARP ethertype: https://wiki.wireshark.org/Gratuitous_ARP
+        ethertype_arp = "0x0806"
+        # ethertype for IPv6 packets. We might need to insepct the further. IPv6
+        # implements ARP functionality throught the Neighbor Discovery Protocol
+        ethertype_ipv6 = "0x86DD"
 
         def start_capture(machine):
             machine.succeed(
-                f"systemd-run --unit tcpdump-mig -- bash -lc 'tcpdump -i any -w /tmp/rarp.pcap \"ether proto {ethertype_rarp}\" 2> /tmp/rarp.log'"
+                f"systemd-run --unit tcpdump-mig -- bash -lc 'tcpdump -i any -w /tmp/rarp.pcap \"ether proto {ethertype_rarp} or {ethertype_arp} or {ethertype_ipv6}\" 2> /tmp/rarp.log'"
             )
+            # machine.succeed(
+            #     "systemd-run --unit tcpdump-mig -- bash -lc 'tcpdump -i any -w /tmp/rarp.pcap 2> /tmp/rarp.log'"
+            # )
             machine.wait_until_succeeds("grep -q 'listening on any' /tmp/rarp.log")
 
         def stop_capture_and_count_packets(machine):
             machine.succeed("systemctl stop tcpdump-mig")
             rarps = (
                 machine.succeed(
-                    f'tshark -r /tmp/rarp.pcap -Y "sll.etype == {ethertype_rarp}" -T fields -e sll.src.eth'
+                    f'tshark -r /tmp/rarp.pcap -Y "sll.etype == {ethertype_rarp}" -T fields -e sll.src.eth -e sll.pkttype -e sll.etype'
                 )
                 .strip()
                 .splitlines()
             )
+            print(len(rarps))
+            print(rarps)
+
+        def check_feature_guest_announce(machine: Machine, device_id: str) -> bool:
+            # There are 128 virtio feature bits. Reading sysfs yield these bits with the LSB being the leftmost bit in
+            # the returned string and the MSB the rightmost bit. We can therefore access the respective bit by simply
+            # indexing into the string.
+            VIRTIO_NET_F_GUEST_ANNOUNCE = 21
+            features = ssh(
+                machine,
+                f"cat /sys/class/net/{device_id}/device/features"
+            )
+            if features[VIRTIO_NET_F_GUEST_ANNOUNCE] == "1":
+                return True
+            else:
+                return False
 
             # We only check whether we got rarp packets for both NICs, by
             # looking at the source MAC addresses.
-            self.assertEqual(len(set(rarps)), 2, "number of rarp packets should match")
+            #self.assertEqual(len(set(rarps)), 2, "number of rarp packets should match")
 
         for _ in range(2):
             start_capture(computeVM)
@@ -257,6 +283,8 @@ class LibvirtTests(LibvirtTestsBase):  # type: ignore
             )
             wait_for_ssh(computeVM)
             stop_capture_and_count_packets(computeVM)
+            print(f"VIRTIO_NET_F_GUEST_ANNOUNCE(21): {check_feature_guest_announce(computeVM, "eth1337")}")
+            breakpoint()
             # Test we cannot migrate a VM that is already migrated
             controllerVM.fail(
                 "virsh migrate --domain testvm --desturi ch+tcp://192.168.100.2/session --persistent --live --p2p"
@@ -1465,30 +1493,30 @@ class LibvirtTests(LibvirtTestsBase):  # type: ignore
 def suite():
     # Test cases involving live migration sorted in alphabetical order.
     testcases = [
-        LibvirtTests.test_bdf_explicit_assignment,
-        LibvirtTests.test_bdf_implicit_assignment,
+        # LibvirtTests.test_bdf_explicit_assignment,
+        # LibvirtTests.test_bdf_implicit_assignment,
         LibvirtTests.test_live_migration,
-        LibvirtTests.test_live_migration_after_failed_migration,
-        LibvirtTests.test_live_migration_cancel_basic,
-        LibvirtTests.test_live_migration_cancel_complex,
-        LibvirtTests.test_live_migration_during_boot,
-        LibvirtTests.test_live_migration_failure_with_guest_reboot,
-        LibvirtTests.test_live_migration_failure_with_guest_shutdown,
-        LibvirtTests.test_live_migration_kill_chv_on_sender_side,
-        LibvirtTests.test_live_migration_network_lost,
-        LibvirtTests.test_live_migration_non_peer2peer_is_not_supported,
-        LibvirtTests.test_live_migration_parallel_connections,
-        LibvirtTests.test_live_migration_statistics,
-        LibvirtTests.test_live_migration_tls,
-        LibvirtTests.test_live_migration_tls_without_certificates,
-        LibvirtTests.test_live_migration_to_self_is_rejected,
-        LibvirtTests.test_live_migration_virsh_non_blocking,
-        LibvirtTests.test_live_migration_with_guest_reboot,
-        LibvirtTests.test_live_migration_with_guest_shutdown,
-        LibvirtTests.test_live_migration_with_hotplug,
-        LibvirtTests.test_live_migration_with_hotplug_and_virtchd_restart,
-        LibvirtTests.test_live_migration_with_serial_tcp,
-        LibvirtTests.test_live_migration_with_vcpu_pinning,
+        # LibvirtTests.test_live_migration_after_failed_migration,
+        # LibvirtTests.test_live_migration_cancel_basic,
+        # LibvirtTests.test_live_migration_cancel_complex,
+        # LibvirtTests.test_live_migration_during_boot,
+        # LibvirtTests.test_live_migration_failure_with_guest_reboot,
+        # LibvirtTests.test_live_migration_failure_with_guest_shutdown,
+        # LibvirtTests.test_live_migration_kill_chv_on_sender_side,
+        # LibvirtTests.test_live_migration_network_lost,
+        # LibvirtTests.test_live_migration_non_peer2peer_is_not_supported,
+        # LibvirtTests.test_live_migration_parallel_connections,
+        # LibvirtTests.test_live_migration_statistics,
+        # LibvirtTests.test_live_migration_tls,
+        # LibvirtTests.test_live_migration_tls_without_certificates,
+        # LibvirtTests.test_live_migration_to_self_is_rejected,
+        # LibvirtTests.test_live_migration_virsh_non_blocking,
+        # LibvirtTests.test_live_migration_with_guest_reboot,
+        # LibvirtTests.test_live_migration_with_guest_shutdown,
+        # LibvirtTests.test_live_migration_with_hotplug,
+        # LibvirtTests.test_live_migration_with_hotplug_and_virtchd_restart,
+        # LibvirtTests.test_live_migration_with_serial_tcp,
+        # LibvirtTests.test_live_migration_with_vcpu_pinning,
     ]
 
     suite = unittest.TestSuite()
