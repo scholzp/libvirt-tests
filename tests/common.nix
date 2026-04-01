@@ -492,21 +492,28 @@ in
           Name = "br4";
         };
       };
+      "10-br9" = {
+        netdevConfig = {
+          Kind = "bridge";
+          Name = "br9";
+        };
+      };
     };
 
     networks = {
-      "10-tap1" = {
+      "30-tap1" = {
         enable = true;
         matchConfig.Name = "tap1";
         networkConfig = {
           Description = "Main network";
           DHCPServer = "no";
+          Bridge = "br9";
         };
 
-        # Please keep in sync with documentation in networks.md!
-        address = [
-          "192.168.1.1/24" # Main network
-        ];
+        # # Please keep in sync with documentation in networks.md!
+        # address = [
+        #   "192.168.1.1/24" # Main network
+        # ];
       };
       "10-tap2" = {
         enable = true;
@@ -534,6 +541,16 @@ in
         address = [
           "192.168.4.1/24" # hotplugged interface
         ];
+      };
+      "20-br9" = {
+        enable = true;
+        matchConfig.Name = [ "br9" ];
+        networkConfig = {
+          Description = "Hot Plug Bridge";
+          DHCPServer = "no";
+        };
+
+        address = [ "192.168.1.1/24" ];
       };
     };
   };
@@ -577,6 +594,7 @@ in
     btop
     cloud-hypervisor
     dmidecode
+    ethtool
     expect
     fcntl-tool
     gdb

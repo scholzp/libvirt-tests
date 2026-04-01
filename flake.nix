@@ -16,8 +16,8 @@
     libvirt.inputs.nixpkgs.follows = "nixpkgs";
 
     # cloud-hypervisor.url = "git+file:<path/to/cloud-hypervisor>";
-    # cloud-hypervisor.url = "github:cyberus-technology/cloud-hypervisor?ref=gardenlinux";
-    cloud-hypervisor.url = "git+https://github.com/amphi/cloud-hypervisor.git?ref=virtio-guest-announce";
+    cloud-hypervisor.url = "github:cyberus-technology/cloud-hypervisor?ref=gardenlinux";
+    # cloud-hypervisor.url = "git+https://github.com/amphi/cloud-hypervisor.git?ref=virtio-guest-announce";
     cloud-hypervisor.inputs.nixpkgs.follows = "nixpkgs";
 
     edk2-src.url = "git+https://github.com/cyberus-technology/edk2?ref=gardenlinux&submodules=1";

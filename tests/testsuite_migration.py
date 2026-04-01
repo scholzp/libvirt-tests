@@ -237,25 +237,38 @@ class LibvirtTests(LibvirtTestsBase):  # type: ignore
         ethertype_ipv6 = "0x86DD"
 
         def start_capture(machine):
+            if_name = "br9"
+            machine.succeed(f"ip link set {if_name} promisc on")
+            machine.succeed(f"tc filter add dev {if_name} parent ffff: matchall action mirred egress mirror dev monitor0")
+            machine.wait_until_succeeds(f"ip addr | grep {if_name}")
+            # machine.succeed(
+            #     f"systemd-run --unit tcpdump-mig -- bash -lc 'tcpdump -i any -w /tmp/rarp.pcap \"ether proto {ethertype_rarp} or {ethertype_arp} or {ethertype_ipv6}\" 2> /tmp/rarp.log'"
+            # )
             machine.succeed(
-                f"systemd-run --unit tcpdump-mig -- bash -lc 'tcpdump -i any -w /tmp/rarp.pcap \"ether proto {ethertype_rarp} or {ethertype_arp} or {ethertype_ipv6}\" 2> /tmp/rarp.log'"
+                f"systemd-run --unit tcpdump-mig -- bash -lc 'tcpdump -n -i {if_name} -w /tmp/rarp.pcap \"ether proto {ethertype_rarp} or {ethertype_arp} or {ethertype_ipv6}\" 2> /tmp/rarp.log'"
             )
             # machine.succeed(
             #     "systemd-run --unit tcpdump-mig -- bash -lc 'tcpdump -i any -w /tmp/rarp.pcap 2> /tmp/rarp.log'"
             # )
-            machine.wait_until_succeeds("grep -q 'listening on any' /tmp/rarp.log")
+            machine.wait_until_succeeds(f"grep -q 'listening on {if_name}' /tmp/rarp.log")
 
-        def stop_capture_and_count_packets(machine):
+        def stop_capture_and_count_packets(machine, id: str = "controller"):
             machine.succeed("systemctl stop tcpdump-mig")
             rarps = (
+                # machine.succeed(
+                #     f'tshark -r /tmp/rarp.pcap -Y "sll.etype == {ethertype_rarp}" -T fields -e sll.src.eth -e sll.pkttype -e sll.etype'
+                # )
+                # machine.succeed(
+                #     f'tshark -r /tmp/rarp.pcap -Y "eth.type == {ethertype_rarp}" -T fields -e eth.src -e eth.dst'
+                # )
                 machine.succeed(
-                    f'tshark -r /tmp/rarp.pcap -Y "sll.etype == {ethertype_rarp}" -T fields -e sll.src.eth -e sll.pkttype -e sll.etype'
+                    'tshark -r /tmp/rarp.pcap -T fields -e eth.src -e eth.dst -e eth.type'
                 )
                 .strip()
                 .splitlines()
             )
-            print(len(rarps))
-            print(rarps)
+            print(f"{id}: {len(rarps)}")
+            print(f"{id}: {rarps}")
 
         def check_feature_guest_announce(machine: Machine, device_id: str) -> bool:
             # There are 128 virtio feature bits. Reading sysfs yield these bits with the LSB being the leftmost bit in
@@ -276,14 +289,26 @@ class LibvirtTests(LibvirtTestsBase):  # type: ignore
             #self.assertEqual(len(set(rarps)), 2, "number of rarp packets should match")
 
         for _ in range(2):
+            start_capture(controllerVM)
             start_capture(computeVM)
             # Explicitly use IP in desturi as this was already a problem in the past
             controllerVM.succeed(
                 "virsh migrate --domain testvm --desturi ch+tcp://192.168.100.2/session --persistent --live --p2p"
             )
             wait_for_ssh(computeVM)
-            stop_capture_and_count_packets(computeVM)
-            print(f"VIRTIO_NET_F_GUEST_ANNOUNCE(21): {check_feature_guest_announce(computeVM, "eth1337")}")
+            stop_capture_and_count_packets(computeVM, id = "compute")
+            stop_capture_and_count_packets(controllerVM)
+            # We need to branch depending on the operation mode of the network device
+            if check_feature_guest_announce(computeVM, "eth1337"):
+                # We don't expect to see any RARP packets because we make the driver announce its new location. It does
+                # so by sending GARP packets
+                print("VIRTIO_NET_F_GUEST_ANNOUNCE(21): True")
+
+            else:
+                # The driver does not support announcing its new location so Cloud Hypervisor should do this by best
+                # effort. It does so by sending rARP packets from the respective network interface.
+                print("VIRTIO_NET_F_GUEST_ANNOUNCE(21): False")
+
             breakpoint()
             # Test we cannot migrate a VM that is already migrated
             controllerVM.fail(
