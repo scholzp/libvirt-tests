@@ -484,7 +484,6 @@ in
     enable = true;
     wait-online.enable = false;
 
-    # Created devices.
     netdevs = {
       "10-br4" = {
         netdevConfig = {
@@ -498,23 +497,31 @@ in
           Name = "br9";
         };
       };
+      "15-br9-host" = {
+        netdevConfig = {
+          Kind = "macvlan";
+          Name = "br9-host";
+        };
+        extraConfig = ''
+          [MACVLAN]
+          Mode=bridge
+        '';
+      };
     };
 
     networks = {
+      # tap1 — enslaved to br9, no IP
       "30-tap1" = {
         enable = true;
         matchConfig.Name = "tap1";
         networkConfig = {
-          Description = "Main network";
+          Description = "Main network tap";
           DHCPServer = "no";
           Bridge = "br9";
         };
-
-        # # Please keep in sync with documentation in networks.md!
-        # address = [
-        #   "192.168.1.1/24" # Main network
-        # ];
       };
+
+      # tap2 — standalone, hotplug device
       "10-tap2" = {
         enable = true;
         matchConfig.Name = "tap2";
@@ -522,13 +529,10 @@ in
           Description = "Hotplug device";
           DHCPServer = "no";
         };
-
-        # Please keep in sync with documentation in networks.md!
-        address = [
-          "192.168.2.1/24" # hotplugged interface
-        ];
+        address = [ "192.168.2.1/24" ];
       };
-      # Bridge interface configuration
+
+      # br4 — hotplug bridge, keeps its IP
       "10-br4" = {
         enable = true;
         matchConfig.Name = "br4";
@@ -536,26 +540,46 @@ in
           Description = "Hot Plug Bridge";
           DHCPServer = "no";
         };
-
-        # Please keep in sync with documentation in networks.md!
-        address = [
-          "192.168.4.1/24" # hotplugged interface
-        ];
+        address = [ "192.168.4.1/24" ];
       };
+
+      # br9 — pure L2 bridge, no IP, no ARP processing
       "20-br9" = {
         enable = true;
-        matchConfig.Name = [ "br9" ];
+        matchConfig.Name = "br9";
         networkConfig = {
-          Description = "Hot Plug Bridge";
+          Description = "Main Bridge — pure L2";
           DHCPServer = "no";
+          LinkLocalAddressing = "no";
+          MACVLAN = "br9-host";
         };
+      };
 
+      # br9-host — macvlan on top of br9, carries the host IP
+      "25-br9-host" = {
+        enable = true;
+        matchConfig.Name = "br9-host";
+        networkConfig = {
+          Description = "Host-side interface for br9";
+          DHCPServer = "no";
+          BindCarrier = "br9";
+        };
         address = [ "192.168.1.1/24" ];
       };
     };
   };
 
-  # Please keep in sync with documentation in networks.md!
+  # Disable ARP filtering/suppression on br9 via sysctl
+  boot.kernel.sysctl = {
+  "net.ipv4.conf.br9.arp_accept"   = 2;
+  "net.ipv4.conf.br9.arp_ignore"   = 0;
+  "net.ipv4.conf.br9.arp_announce" = 0;
+  "net.ipv4.conf.br9.proxy_arp"    = 0;
+  # This is the key one: stop the bridge from processing
+  # ARP frames destined for its own IP stack
+  "net.ipv4.conf.br9.arp_filter"   = 0;
+};
+
   networking = {
     useDHCP = false;
     networkmanager.enable = false;

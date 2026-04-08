@@ -229,34 +229,44 @@ class LibvirtTests(LibvirtTestsBase):  # type: ignore
         # We use tcpdump and tshark to check for the RARP packets.
 
         # https://wiki.wireshark.org/RARP
-        ethertype_rarp = "0x8035"
-        # GARP use the ARP ethertype: https://wiki.wireshark.org/Gratuitous_ARP
-        ethertype_arp = "0x0806"
-        # ethertype for IPv6 packets. We might need to insepct the further. IPv6
-        # implements ARP functionality throught the Neighbor Discovery Protocol
-        ethertype_ipv6 = "0x86DD"
+        # ethertype_rarp = "0x8035"
+        # # GARP use the ARP ethertype: https://wiki.wireshark.org/Gratuitous_ARP
+        # ethertype_arp = "0x0806"
+        # # ethertype for IPv6 packets. We might need to insepct the further. IPv6
+        # # implements ARP functionality throught the Neighbor Discovery Protocol
+        # ethertype_ipv6 = "0x86DD"
 
         def start_capture(machine):
-            if_name = "br9"
-            machine.succeed(f"ip link set {if_name} promisc on")
-            machine.succeed(f"tc filter add dev {if_name} parent ffff: matchall action mirred egress mirror dev monitor0")
-            machine.wait_until_succeeds(f"ip addr | grep {if_name}")
-            # machine.succeed(
-            #     f"systemd-run --unit tcpdump-mig -- bash -lc 'tcpdump -i any -w /tmp/rarp.pcap \"ether proto {ethertype_rarp} or {ethertype_arp} or {ethertype_ipv6}\" 2> /tmp/rarp.log'"
-            # )
+            # if_name = "monitor0"
+            #machine.succeed(f"ip link set {if_name} promisc on")
+            machine.succeed("ebtables -F")
+            #machine.succeed("bridge link set dev tap1 neigh_suppress off")
+            # machine.succeed("ip link add monitor0 type dummy")
+            # machine.succeed("ip link set monitor0 up")
+            # machine.succeed("tc qdisc add dev br9 ingress")
+
+            # machine.succeed("tc filter add dev br9 parent ffff: matchall action mirred egress mirror dev monitor0")
+            # machine.wait_until_succeeds(f"ip addr | grep {if_name}")
+                #\"ether proto {ethertype_rarp} or {ethertype_arp} or {ethertype_ipv6}\"
             machine.succeed(
-                f"systemd-run --unit tcpdump-mig -- bash -lc 'tcpdump -n -i {if_name} -w /tmp/rarp.pcap \"ether proto {ethertype_rarp} or {ethertype_arp} or {ethertype_ipv6}\" 2> /tmp/rarp.log'"
+                "systemd-run --unit tcpdump-mig -- bash -lc 'tcpdump -i br9 -w /tmp/rarp.pcap  2> /tmp/rarp.log'"
             )
             # machine.succeed(
-            #     "systemd-run --unit tcpdump-mig -- bash -lc 'tcpdump -i any -w /tmp/rarp.pcap 2> /tmp/rarp.log'"
+            #     f"systemd-run --unit tcpdump-mig -- bash -lc 'tcpdump -n -i {if_name} -w /tmp/rarp.pcap \"ether proto {ethertype_rarp} or {ethertype_arp} or {ethertype_ipv6}\" 2> /tmp/rarp.log'"
             # )
-            machine.wait_until_succeeds(f"grep -q 'listening on {if_name}' /tmp/rarp.log")
+            # machine.succeed(
+            #     "systemd-run --unit tcpdump-mig -- bash -lc 'tcpdump -i monitor0 -w /tmp/rarp.pcap 2> /tmp/rarp.log'"
+            # )
+            # machine.wait_until_succeeds(f"grep -q 'listening on {if_name}' /tmp/rarp.log")
+            machine.wait_until_succeeds("grep -q 'listening on br9' /tmp/rarp.log")
+            # machine.wait_until_succeeds("grep -q 'listening on br9' /tmp/rarp.log")
+            # machine.succeed("arping -c 3 -U -I tap1 192.168.1.1")
 
         def stop_capture_and_count_packets(machine, id: str = "controller"):
             machine.succeed("systemctl stop tcpdump-mig")
             rarps = (
                 # machine.succeed(
-                #     f'tshark -r /tmp/rarp.pcap -Y "sll.etype == {ethertype_rarp}" -T fields -e sll.src.eth -e sll.pkttype -e sll.etype'
+                #     'tshark -r /tmp/rarp.pcap -T fields -e sll.src.eth -e sll.pkttype -e sll.etype'
                 # )
                 # machine.succeed(
                 #     f'tshark -r /tmp/rarp.pcap -Y "eth.type == {ethertype_rarp}" -T fields -e eth.src -e eth.dst'
@@ -292,13 +302,18 @@ class LibvirtTests(LibvirtTestsBase):  # type: ignore
             start_capture(controllerVM)
             start_capture(computeVM)
             # Explicitly use IP in desturi as this was already a problem in the past
+            controllerVM.succeed("arping -c 10 -A -I tap1 192.168.1.1")
+            time.sleep(5)
             controllerVM.succeed(
                 "virsh migrate --domain testvm --desturi ch+tcp://192.168.100.2/session --persistent --live --p2p"
             )
             wait_for_ssh(computeVM)
+            # breakpoint()
+            computeVM.succeed("arping -c 10 -A -I tap1 192.168.1.1")
             stop_capture_and_count_packets(computeVM, id = "compute")
             stop_capture_and_count_packets(controllerVM)
             # We need to branch depending on the operation mode of the network device
+            breakpoint()
             if check_feature_guest_announce(computeVM, "eth1337"):
                 # We don't expect to see any RARP packets because we make the driver announce its new location. It does
                 # so by sending GARP packets
