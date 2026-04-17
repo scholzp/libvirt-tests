@@ -10,11 +10,11 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1776175591,
-        "narHash": "sha256-s3qpPtgzmdg6oW+1gvImR+Qdv6mBvphFscPMMH2LKjU=",
+        "lastModified": 1776351118,
+        "narHash": "sha256-zz50weqJiddX48r04fEgNIGpG7lawvijamQCuamO5Y4=",
         "owner": "cyberus-technology",
         "repo": "cloud-hypervisor",
-        "rev": "06092ab3f37caf5b8418baf431b5879368761f9c",
+        "rev": "126d212329bcdc57c6c89ea7bbcddc70081f7d1c",
         "type": "github"
       },
       "original": {
@@ -771,11 +771,11 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1776067740,
-        "narHash": "sha256-B35lpsqnSZwn1Lmz06BpwF7atPgFmUgw1l8KAV3zpVQ=",
+        "lastModified": 1776221942,
+        "narHash": "sha256-FbQAeVNi7G4v3QCSThrSAAvzQTmrmyDLiHNPvTF2qFM=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "7e495b747b51f95ae15e74377c5ce1fe69c1765f",
+        "rev": "1766437c5509f444c1b15331e82b8b6a9b967000",
         "type": "github"
       },
       "original": {
